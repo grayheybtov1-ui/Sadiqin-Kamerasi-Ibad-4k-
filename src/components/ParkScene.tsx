@@ -315,6 +315,121 @@ const BicycleRack = ({ position, rotation = [0, 0, 0] }: { position: [number, nu
   </group>
 );
 
+const RegulationSign = ({ position, rotation = [0, 0, 0], type = "grass" }: { position: [number, number, number], rotation?: [number, number, number], type?: "grass" | "smoking" }) => (
+  <group position={position} rotation={rotation}>
+    {/* Post */}
+    <mesh position={[0, 0.6, 0]} castShadow>
+      <boxGeometry args={[0.05, 1.2, 0.05]} />
+      <meshStandardMaterial color="#333" />
+    </mesh>
+    {/* Board */}
+    <group position={[0, 1.2, 0]}>
+      <mesh castShadow>
+        <boxGeometry args={[0.8, 0.6, 0.05]} />
+        <meshStandardMaterial color="white" />
+      </mesh>
+      <mesh position={[0, 0, 0.03]}>
+        <ringGeometry args={[0.18, 0.22, 32]} />
+        <meshStandardMaterial color="red" />
+      </mesh>
+      <mesh position={[0, 0, 0.03]} rotation={[0, 0, Math.PI / 4]}>
+        <boxGeometry args={[0.45, 0.03, 0.01]} />
+        <meshStandardMaterial color="red" />
+      </mesh>
+      {type === "grass" ? (
+        <Text position={[0, -0.15, 0.03]} fontSize={0.06} color="black" fontWeight="bold">
+          OTA BASMA!
+        </Text>
+      ) : (
+        <Text position={[0, -0.15, 0.03]} fontSize={0.06} color="black" fontWeight="bold">
+          SİQARET QADAĞANDIR
+        </Text>
+      )}
+      {/* Icon simplified */}
+      {type === "smoking" && (
+        <mesh position={[-0.05, 0.05, 0.03]} rotation={[0, 0, 0.2]}>
+          <boxGeometry args={[0.15, 0.03, 0.01]} />
+          <meshStandardMaterial color="black" />
+        </mesh>
+      )}
+    </group>
+  </group>
+);
+
+const Swing = ({ position, rotation = [0, 0, 0] }: { position: [number, number, number], rotation?: [number, number, number] }) => {
+  const seatRef = useRef<THREE.Group>(null);
+
+  useFrame((state) => {
+    if (seatRef.current) {
+      // Harmonic motion for swing: oscillate on X-axis rotation
+      const angle = Math.sin(state.clock.elapsedTime * 1.5) * 0.4;
+      seatRef.current.rotation.x = angle;
+    }
+  });
+
+  return (
+    <group position={position} rotation={rotation}>
+      {/* Frame: Two vertical legs and one top bar */}
+      <mesh position={[-1, 1.5, 0]} castShadow>
+        <cylinderGeometry args={[0.05, 0.05, 3]} />
+        <meshStandardMaterial color="#444" />
+      </mesh>
+      <mesh position={[1, 1.5, 0]} castShadow>
+        <cylinderGeometry args={[0.05, 0.05, 3]} />
+        <meshStandardMaterial color="#444" />
+      </mesh>
+      <mesh position={[0, 3, 0]} rotation={[0, 0, Math.PI / 2]} castShadow>
+        <cylinderGeometry args={[0.05, 0.05, 2]} />
+        <meshStandardMaterial color="#444" />
+      </mesh>
+
+      {/* Swinging Assembly: Pivots from the top bar */}
+      <group position={[0, 3, 0]} ref={seatRef}>
+        {/* Chains */}
+        <mesh position={[-0.4, -1, 0]} castShadow>
+          <cylinderGeometry args={[0.01, 0.01, 2]} />
+          <meshStandardMaterial color="#999" metalness={1} />
+        </mesh>
+        <mesh position={[0.4, -1, 0]} castShadow>
+          <cylinderGeometry args={[0.01, 0.01, 2]} />
+          <meshStandardMaterial color="#999" metalness={1} />
+        </mesh>
+
+        {/* Seat & Person */}
+        <group position={[0, -2, 0]}>
+          <mesh castShadow>
+            <boxGeometry args={[1, 0.05, 0.4]} />
+            <meshStandardMaterial color="#8b4513" />
+          </mesh>
+
+          {/* Simplified Person Model sitting on the seat */}
+          <group position={[0, 0.1, 0]}>
+            {/* Torso */}
+            <mesh position={[0, 0.4, 0]} castShadow>
+              <capsuleGeometry args={[0.15, 0.4, 4, 8]} />
+              <meshStandardMaterial color="#3b82f6" />
+            </mesh>
+            {/* Head */}
+            <mesh position={[0, 0.9, 0]} castShadow>
+              <sphereGeometry args={[0.12]} />
+              <meshStandardMaterial color="#ffdbac" />
+            </mesh>
+            {/* Legs (bent for sitting) */}
+            <mesh position={[-0.1, -0.1, 0.2]} rotation={[Math.PI / 4, 0, 0]} castShadow>
+              <capsuleGeometry args={[0.06, 0.3, 4, 8]} />
+              <meshStandardMaterial color="#1e3a8a" />
+            </mesh>
+            <mesh position={[0.1, -0.1, 0.2]} rotation={[Math.PI / 4, 0, 0]} castShadow>
+              <capsuleGeometry args={[0.06, 0.3, 4, 8]} />
+              <meshStandardMaterial color="#1e3a8a" />
+            </mesh>
+          </group>
+        </group>
+      </group>
+    </group>
+  );
+};
+
 const YellowZone = ({ position }: { position: [number, number, number] }) => (
   <mesh rotation={[-Math.PI / 2, 0, 0]} position={position} receiveShadow>
     <planeGeometry args={[6, 6]} />
@@ -663,9 +778,8 @@ function SceneContent({
   hasEnteredGrass, setHasEnteredGrass, trashItems, setTrashItems
 }: any) {
   const { gl } = useThree();
-  const grassFiredRef = useRef(false); // sync guard against multi-frame duplicates
+  const grassFiredRef = useRef(false);
 
-  // Stable random positions for vegetation
   const vegetation = React.useMemo(() => {
     const treesL = [...Array(20)].map((_, i) => ({
       pos: [-15 - Math.random() * 20, 0, (i - 10) * 5 + (Math.random() - 0.5) * 5] as [number, number, number],
@@ -692,7 +806,6 @@ function SceneContent({
       { pos: [-15, 0, 20] as [number, number, number] }
     ];
     const scatteredFlowers = [...Array(50)].map((_, i) => {
-      // Keep flowers off the road (sidewalk runs along X=-2 to +2)
       const side = Math.random() > 0.5 ? 1 : -1;
       const x = side * (5 + Math.random() * 20);
       return {
@@ -796,16 +909,13 @@ function SceneContent({
       <Sidewalk />
       <Sun />
 
-      {/* Clouds */}
       <Cloud position={[-15, 15, -10]} /><Cloud position={[10, 18, -20]} /><Cloud position={[20, 14, 5]} /><Cloud position={[-5, 16, 15]} />
 
-      {/* Dense Vegetation - Using memoized positions */}
       {vegetation.treesL.map((t, i) => <Tree key={`tl-${i}`} position={t.pos} scale={t.scale} />)}
       {vegetation.treesR.map((t, i) => <Tree key={`tr-${i}`} position={t.pos} scale={t.scale} />)}
       {vegetation.bushesL.map((b, i) => <Bush key={`bl-${i}`} position={b.pos} />)}
       {vegetation.bushesR.map((b, i) => <Bush key={`br-${i}`} position={b.pos} />)}
 
-      {/* Scattered Rocks and Flowerbeds */}
       {vegetation.rocks.map((r, i) => <Rock key={`rk-${i}`} position={r.pos} scale={r.scale} />)}
       {vegetation.flowerBeds.map((f, i) => <FlowerBed key={`fb-${i}`} position={f.pos} />)}
       {vegetation.scatteredFlowers.map((f, i) => (
@@ -814,6 +924,14 @@ function SceneContent({
           <mesh position={[0, 0.2, 0]} castShadow><sphereGeometry args={[0.08, 8, 8]} /><meshStandardMaterial color={f.color} /></mesh>
         </group>
       ))}
+
+      {/* Regulation Signs - Positioned along the road (x = ±2.2) */}
+      <RegulationSign position={[-2.2, 0, -7.5]} rotation={[0, Math.PI / 2, 0]} type="grass" />
+      <RegulationSign position={[2.2, 0, 8]} rotation={[0, -Math.PI / 2, 0]} type="grass" />
+      <RegulationSign position={[2.2, 0, -2]} rotation={[0, -Math.PI / 2, 0]} type="smoking" />
+      <RegulationSign position={[-2.2, 0, 15]} rotation={[0, Math.PI / 2, 0]} type="smoking" />
+
+
 
       {/* Furniture */}
       <Bench position={[-3, 0, 5]} rotation={[0, Math.PI / 2, 0]} /><TrashCan position={[-2.5, 0, 6.5]} />
@@ -828,7 +946,7 @@ function SceneContent({
       ))}
 
       {/* Architectural Details */}
-      <Gazebo position={[-25, 0, -12]} /><Fountain position={[20, 0, 15]} /><Pond position={[18, 0, -15]} /><Slide position={[-20, 0, 5]} rotation={[0, Math.PI / 4, 0]} /><Swings position={[-22, 0, 8]} rotation={[0, Math.PI / 2, 0]} />
+      <Gazebo position={[-25, 0, -12]} /><Fountain position={[20, 0, 15]} /><Pond position={[18, 0, -15]} /><Slide position={[-20, 0, 5]} rotation={[0, Math.PI / 4, 0]} /><Swing position={[-22, 0, 8]} rotation={[0, Math.PI / 2, 0]} />
 
       {/* Special Zones */}
       {trashItems.map((item: any) => (

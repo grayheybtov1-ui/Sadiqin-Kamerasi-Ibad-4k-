@@ -3,7 +3,7 @@
 
 
 import React, { useState, useEffect } from 'react';
-import { Shield, Camera, AlertTriangle, List, Activity, User, Flower2, Zap, Monitor, Clock, MapPin, ArrowRight, Scan } from 'lucide-react';
+import { Shield, Camera, AlertTriangle, List, Activity, User, Flower2, Zap, Monitor, Clock, MapPin, ArrowRight, Scan, CigaretteOff, Footprints } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Canvas } from '@react-three/fiber';
 import { PerspectiveCamera, Environment } from '@react-three/drei';
@@ -61,7 +61,7 @@ const Dashboard = ({ onBack }: DashboardProps) => {
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [isAlertActive, setIsAlertActive] = useState(false);
   const [activeModel, setActiveModel] = useState<number>(0);
-  const [currentView, setCurrentView] = useState<'monitoring' | 'arxiv' | 'cameras'>('monitoring');
+  const [currentView, setCurrentView] = useState<'monitoring' | 'arxiv' | 'cameras' | 'analytics'>('monitoring');
   const [recSeconds, setRecSeconds] = useState(0);
   const [selectedIncident, setSelectedIncident] = useState<Incident | null>(null);
 
@@ -135,7 +135,12 @@ const Dashboard = ({ onBack }: DashboardProps) => {
             active={currentView === 'arxiv'}
             onClick={() => setCurrentView('arxiv')}
           />
-          <NavItem icon={<Activity className="w-5 h-5" />} label="Analitika" />
+          <NavItem
+            icon={<Activity className="w-5 h-5" />}
+            label="Analitika"
+            active={currentView === 'analytics'}
+            onClick={() => setCurrentView('analytics')}
+          />
         </nav>
 
         {/* Left Side Violation Bar */}
@@ -235,27 +240,6 @@ const Dashboard = ({ onBack }: DashboardProps) => {
                     </div>
                   </div>
 
-                  {/* 3 AI Models Indicators */}
-                  <div className="absolute bottom-10 right-10 flex flex-col gap-3">
-                    <ModelIndicator
-                      active={activeModel === 0}
-                      icon={<User className="w-4 h-4" />}
-                      label="Model 1: Human Detection"
-                      status="Tracking"
-                    />
-                    <ModelIndicator
-                      active={activeModel === 1}
-                      icon={<Flower2 className="w-4 h-4" />}
-                      label="Model 2: Object Segmentation"
-                      status="Active"
-                    />
-                    <ModelIndicator
-                      active={activeModel === 2}
-                      icon={<Zap className="w-4 h-4" />}
-                      label="Model 3: Action Recognition"
-                      status="Analyzing"
-                    />
-                  </div>
                 </div>
 
                 {/* Face Capture Overlay */}
@@ -305,6 +289,101 @@ const Dashboard = ({ onBack }: DashboardProps) => {
                     </div>
                   </div>
                 ))}
+              </div>
+            </div>
+          ) : currentView === 'analytics' ? (
+            <div className="flex-1 p-8 overflow-y-auto bg-black/40">
+              <div className="flex items-center justify-between mb-8">
+                <div>
+                  <h1 className="text-3xl font-bold tracking-tight">Statistika və Hesabatlar</h1>
+                  <p className="text-white/50 text-sm mt-1">Gündəlik və aylıq qayda pozuntularının analizi</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="px-4 py-2 bg-white/5 rounded-xl border border-white/10 text-xs font-bold text-white/60">
+                    SON 30 GÜN
+                  </div>
+                  <button className="px-4 py-2 bg-blue-600 rounded-xl text-xs font-bold hover:bg-blue-700 transition-all">
+                    HESABATI YÜKLƏ (.PDF)
+                  </button>
+                </div>
+              </div>
+
+              {/* Stats Overview */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <StatCard 
+                  title="Gündəlik Pozuntular" 
+                  value="12" 
+                  trend="+20%" 
+                  icon={<Clock className="w-5 h-5 text-blue-500" />} 
+                  color="blue"
+                />
+                <StatCard 
+                  title="Aylıq Pozuntular" 
+                  value="342" 
+                  trend="-5%" 
+                  icon={<Activity className="w-5 h-5 text-purple-500" />} 
+                  color="purple"
+                />
+                <StatCard 
+                  title="Ən Çox Pozulan Qayda" 
+                  value="Gül Dərmək" 
+                  icon={<Flower2 className="w-5 h-5 text-red-500" />} 
+                  color="red"
+                />
+                <StatCard 
+                  title="Sistem Dəqiqliyi" 
+                  value="98.4%" 
+                  trend="+0.2%" 
+                  icon={<Shield className="w-5 h-5 text-green-500" />} 
+                  color="green"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* Daily Distribution Chart Simulation */}
+                <div className="bg-white/5 border border-white/10 rounded-3xl p-6">
+                  <h3 className="text-sm font-bold uppercase tracking-widest text-white/40 mb-6">Gündəlik Pozuntu Paylanması</h3>
+                  <div className="h-64 flex items-end justify-between gap-2">
+                    {[40, 70, 45, 90, 65, 30, 55, 80, 40, 60, 75, 50].map((height, i) => (
+                      <div key={i} className="flex-1 flex flex-col items-center gap-2 group">
+                        <motion.div 
+                          initial={{ height: 0 }}
+                          animate={{ height: `${height}%` }}
+                          className={`w-full rounded-t-lg bg-gradient-to-t ${i === 3 ? 'from-blue-600 to-blue-400' : 'from-white/10 to-white/20'} group-hover:from-blue-500 group-hover:to-blue-300 transition-all`}
+                        />
+                        <span className="text-[8px] font-mono text-white/20">{i + 8}:00</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Monthly Violations Trend Simulation */}
+                <div className="bg-white/5 border border-white/10 rounded-3xl p-6">
+                  <h3 className="text-sm font-bold uppercase tracking-widest text-white/40 mb-6">Aylıq Pozuntu Trendi</h3>
+                  <div className="h-64 flex items-end justify-between gap-4">
+                    {['Yan', 'Fev', 'Mar', 'Apr', 'May', 'İyun'].map((month, i) => (
+                      <div key={i} className="flex-1 flex flex-col items-center gap-2 group">
+                        <motion.div 
+                          initial={{ height: 0 }}
+                          animate={{ height: `${[30, 45, 25, 60, 85, 40][i]}%` }}
+                          className={`w-full rounded-t-lg bg-gradient-to-t from-purple-600/40 to-purple-400/40 border-t border-purple-400 group-hover:from-purple-500 group-hover:to-purple-300 transition-all`}
+                        />
+                        <span className="text-[10px] font-medium text-white/40">{month}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Category Breakdown */}
+                <div className="lg:col-span-2 bg-white/5 border border-white/10 rounded-3xl p-6">
+                  <h3 className="text-sm font-bold uppercase tracking-widest text-white/40 mb-6">Pozuntu Kateqoriyaları (Aylıq)</h3>
+                  <div className="space-y-4">
+                    <CategoryBar label="Gül dərənler" value={145} total={342} color="bg-red-500" />
+                    <CategoryBar label="Zibil atanlar" value={88} total={342} color="bg-orange-500" />
+                    <CategoryBar label="Qadağan olunmuş ərazi" value={64} total={342} color="bg-yellow-500" />
+                    <CategoryBar label="Digər" value={45} total={342} color="bg-blue-500" />
+                  </div>
+                </div>
               </div>
             </div>
           ) : (
@@ -465,6 +544,16 @@ const NavItem = ({ icon, label, active = false, onClick }: { icon: React.ReactNo
   </div>
 );
 
+const DetailRow = ({ icon, label, value }: { icon: React.ReactNode, label: string, value: string }) => (
+  <div className="flex items-start gap-3 p-3 rounded-xl bg-white/5 border border-white/5">
+    <div className="mt-0.5">{icon}</div>
+    <div>
+      <p className="text-[10px] text-white/30 uppercase tracking-widest font-bold">{label}</p>
+      <p className="text-sm font-semibold mt-0.5">{value}</p>
+    </div>
+  </div>
+);
+
 const ModelIndicator = ({ active, icon, label, status }: { active: boolean, icon: React.ReactNode, label: string, status: string }) => (
   <motion.div
     animate={{
@@ -485,12 +574,35 @@ const ModelIndicator = ({ active, icon, label, status }: { active: boolean, icon
   </motion.div>
 );
 
-const DetailRow = ({ icon, label, value }: { icon: React.ReactNode, label: string, value: string }) => (
-  <div className="flex items-start gap-3 p-3 rounded-xl bg-white/5 border border-white/5">
-    <div className="mt-0.5">{icon}</div>
-    <div>
-      <p className="text-[10px] text-white/30 uppercase tracking-widest font-bold">{label}</p>
-      <p className="text-sm font-semibold mt-0.5">{value}</p>
+const StatCard = ({ title, value, trend, icon, color }: { title: string, value: string, trend?: string, icon: React.ReactNode, color: string }) => (
+  <div className="bg-white/5 border border-white/10 rounded-2xl p-5 hover:bg-white/10 transition-all group">
+    <div className="flex items-center justify-between mb-4">
+      <div className={`w-10 h-10 rounded-xl flex items-center justify-center bg-${color}-500/10 text-${color}-500`}>
+        {icon}
+      </div>
+      {trend && (
+        <span className={`text-[10px] font-bold ${trend.startsWith('+') ? 'text-green-500' : 'text-red-500'} bg-white/5 px-2 py-1 rounded-lg`}>
+          {trend}
+        </span>
+      )}
+    </div>
+    <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest">{title}</p>
+    <p className="text-2xl font-bold mt-1 group-hover:text-blue-400 transition-colors">{value}</p>
+  </div>
+);
+
+const CategoryBar = ({ label, value, total, color }: { label: string, value: number, total: number, color: string }) => (
+  <div className="space-y-2">
+    <div className="flex items-center justify-between text-xs">
+      <span className="font-medium text-white/70">{label}</span>
+      <span className="font-mono text-white/40">{value} / {total}</span>
+    </div>
+    <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden">
+      <motion.div 
+        initial={{ width: 0 }}
+        animate={{ width: `${(value / total) * 100}%` }}
+        className={`h-full ${color} rounded-full`}
+      />
     </div>
   </div>
 );
