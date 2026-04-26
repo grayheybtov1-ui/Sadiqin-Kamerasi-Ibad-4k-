@@ -3,7 +3,7 @@
 
 
 import React, { useState, useEffect } from 'react';
-import { Shield, Camera, AlertTriangle, List, Activity, User, Flower2, Zap, Monitor, Clock, MapPin, ArrowRight, Scan, CigaretteOff, Footprints } from 'lucide-react';
+import { Shield, Camera, AlertTriangle, List, Activity, User, Flower2, Zap, Monitor, Clock, MapPin, ArrowRight, Scan, CigaretteOff, Footprints, Menu, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Canvas } from '@react-three/fiber';
 import { PerspectiveCamera, Environment } from '@react-three/drei';
@@ -64,6 +64,7 @@ const Dashboard = ({ onBack }: DashboardProps) => {
   const [currentView, setCurrentView] = useState<'monitoring' | 'arxiv' | 'cameras' | 'analytics'>('monitoring');
   const [recSeconds, setRecSeconds] = useState(0);
   const [selectedIncident, setSelectedIncident] = useState<Incident | null>(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Format seconds → HH:MM:SS
   const formatRecTime = (s: number) => {
@@ -110,10 +111,11 @@ const Dashboard = ({ onBack }: DashboardProps) => {
 
   return (
     <div className="flex h-screen bg-[#0a0a0a] text-white overflow-hidden font-sans">
-      {/* Sidebar */}
-      <div className="w-20 lg:w-64 border-r border-white/10 flex flex-col items-center lg:items-start p-4 gap-8 glass bg-black/20">
+      {/* Sidebar (Desktop) */}
+      <div className="hidden lg:flex w-64 border-r border-white/10 flex-col items-start p-4 gap-8 glass bg-black/20">
         <div className="flex items-center gap-3 px-2">
-          <span className="hidden lg:block font-bold text-xl tracking-tight">ARBO<span className="text-blue-500">RO</span></span>
+          <div className="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.8)] animate-pulse" />
+          <span className="font-bold text-xl tracking-tight">ARBO<span className="text-blue-500">RO</span></span>
         </div>
 
         <nav className="flex flex-col gap-2 w-full">
@@ -186,34 +188,133 @@ const Dashboard = ({ onBack }: DashboardProps) => {
         </div>
       </div>
 
+      {/* Mobile Sidebar Overlay */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] lg:hidden"
+            />
+            <motion.div
+              initial={{ x: '-100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '-100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="fixed inset-y-0 left-0 w-72 bg-[#0e0e0e] border-r border-white/10 p-6 flex flex-col gap-8 z-[101] lg:hidden"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.8)] animate-pulse" />
+                  <span className="font-bold text-xl tracking-tight">ARBO<span className="text-blue-500">RO</span></span>
+                </div>
+                <button onClick={() => setIsMobileMenuOpen(false)} className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center">
+                  <X className="w-4 h-4 text-white/60" />
+                </button>
+              </div>
+
+              <nav className="flex flex-col gap-2 w-full">
+                <NavItem
+                  icon={<Monitor className="w-5 h-5" />}
+                  label="Monitorinq"
+                  active={currentView === 'monitoring'}
+                  onClick={() => { setCurrentView('monitoring'); setIsMobileMenuOpen(false); }}
+                  mobile
+                />
+                <NavItem
+                  icon={<Camera className="w-5 h-5" />}
+                  label="Kameralar"
+                  active={currentView === 'cameras'}
+                  onClick={() => { setCurrentView('cameras'); setIsMobileMenuOpen(false); }}
+                  mobile
+                />
+                <NavItem
+                  icon={<List className="w-5 h-5" />}
+                  label="Arxiv"
+                  active={currentView === 'arxiv'}
+                  onClick={() => { setCurrentView('arxiv'); setIsMobileMenuOpen(false); }}
+                  mobile
+                />
+                <NavItem
+                  icon={<Activity className="w-5 h-5" />}
+                  label="Analitika"
+                  active={currentView === 'analytics'}
+                  onClick={() => { setCurrentView('analytics'); setIsMobileMenuOpen(false); }}
+                  mobile
+                />
+              </nav>
+
+              <div className="flex flex-col gap-4 w-full mt-4 flex-1 overflow-hidden">
+                <h3 className="text-[10px] font-bold text-red-500 uppercase tracking-[0.2em] px-2 flex items-center gap-2">
+                  <AlertTriangle className="w-3 h-3" /> Qayda Pozuntuları
+                </h3>
+                <div className="flex flex-col gap-3 overflow-y-auto pr-2">
+                  {incidents.slice(0, 5).map((incident) => (
+                    <div key={incident.id} className="p-3 rounded-xl bg-red-500/5 border border-red-500/10">
+                      <p className="text-[10px] font-bold text-red-400 uppercase leading-tight">{incident.type}</p>
+                      <div className="flex items-center gap-2 mt-1 opacity-60">
+                        <Clock className="w-2.5 h-2.5" />
+                        <span className="text-[9px] font-mono">{incident.timestamp}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="mt-auto">
+                <div className="p-4 rounded-2xl bg-white/5 border border-white/10">
+                  <div className="flex items-center gap-2 mb-2 text-xs text-white/50 uppercase tracking-widest font-bold">
+                    <Zap className="w-3 h-3 text-yellow-500" /> Status
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                    <span className="text-sm font-medium text-white/80">Online</span>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
       {/* Main Content */}
       <div className="flex-1 flex flex-col relative overflow-hidden">
         {/* Header */}
-        <header className="h-16 border-b border-white/10 flex items-center justify-between px-8 glass bg-black/40 z-10">
-          <div className="flex items-center gap-6">
+        <header className="h-16 md:h-20 border-b border-white/10 flex items-center justify-between px-4 md:px-8 glass bg-black/40 z-10">
+          <div className="flex items-center gap-3 md:gap-6">
+            <button 
+              onClick={() => setIsMobileMenuOpen(true)}
+              className="lg:hidden w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+            
             {onBack && (
               <button
                 onClick={onBack}
-                className="flex items-center gap-2 px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-xs font-bold hover:bg-white/10 transition-all text-white/70"
+                className="flex items-center gap-2 px-2 md:px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-[10px] md:text-xs font-bold hover:bg-white/10 transition-all text-white/70"
               >
-                <ArrowRight className="w-3.5 h-3.5 rotate-180" /> XƏRİTƏ
+                <ArrowRight className="w-3.5 h-3.5 rotate-180" /> <span className="hidden sm:inline">XƏRİTƏ</span>
               </button>
             )}
-            <h2 className="text-lg font-semibold flex items-center gap-2">
-              <Camera className="w-5 h-5 text-blue-500" />
-              Kamera №042 - Mərkəzi Park
+            <h2 className="text-xs md:text-lg font-semibold flex items-center gap-2 truncate max-w-[150px] md:max-w-none">
+              <Camera className="w-4 h-4 md:w-5 md:h-5 text-blue-500 flex-shrink-0" />
+              <span className="truncate">Kamera №042</span>
             </h2>
-            <div className="px-2 py-0.5 rounded-md bg-blue-500/10 border border-blue-500/20 text-[10px] font-bold text-blue-400 uppercase tracking-tighter">
+            <div className="hidden sm:block px-2 py-0.5 rounded-md bg-blue-500/10 border border-blue-500/20 text-[10px] font-bold text-blue-400 uppercase tracking-tighter">
               4K Ultra HD
             </div>
           </div>
 
-          <div className="flex items-center gap-6">
-            <div className="flex items-center gap-2 text-sm text-white/60">
+          <div className="flex items-center gap-3 md:gap-6">
+            <div className="hidden sm:flex items-center gap-2 text-sm text-white/60">
               <Clock className="w-4 h-4" />
               {new Date().toLocaleTimeString()}
             </div>
-            <div className="w-10 h-10 rounded-full bg-white/10 border border-white/20" />
+            <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-gradient-to-br from-blue-500/20 to-purple-500/20 border border-white/10" />
           </div>
         </header>
 
@@ -228,15 +329,15 @@ const Dashboard = ({ onBack }: DashboardProps) => {
                 {/* HUD Overlay */}
                 <div className="absolute inset-0 pointer-events-none p-6 border-[20px] border-transparent group-hover:border-white/5 transition-all duration-700">
                   {/* Corner Brackets */}
-                  <div className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-white/30" />
-                  <div className="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-white/30" />
-                  <div className="absolute bottom-0 left-0 w-8 h-8 border-b-2 border-l-2 border-white/30" />
-                  <div className="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-white/30" />
+                  <div className="absolute top-0 left-0 w-4 h-4 md:w-8 md:h-8 border-t-2 border-l-2 border-white/30" />
+                  <div className="absolute top-0 right-0 w-4 h-4 md:w-8 md:h-8 border-t-2 border-r-2 border-white/30" />
+                  <div className="absolute bottom-0 left-0 w-4 h-4 md:w-8 md:h-8 border-b-2 border-l-2 border-white/30" />
+                  <div className="absolute bottom-0 right-0 w-4 h-4 md:w-8 md:h-8 border-b-2 border-r-2 border-white/30" />
 
-                  <div className="absolute top-10 left-10 flex flex-col gap-2">
-                    <div className="flex items-center gap-2 px-3 py-1 bg-black/60 rounded-lg border border-white/10 backdrop-blur-md">
-                      <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-                      <span className="text-[10px] font-mono text-white/80 tracking-widest uppercase">REC {formatRecTime(recSeconds)}</span>
+                  <div className="absolute top-4 left-4 md:top-10 md:left-10 flex flex-col gap-2">
+                    <div className="flex items-center gap-2 px-2 md:px-3 py-1 bg-black/60 rounded-lg border border-white/10 backdrop-blur-md">
+                      <div className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-red-500 animate-pulse" />
+                      <span className="text-[8px] md:text-[10px] font-mono text-white/80 tracking-widest uppercase">REC {formatRecTime(recSeconds)}</span>
                     </div>
                   </div>
 
@@ -258,10 +359,10 @@ const Dashboard = ({ onBack }: DashboardProps) => {
             </>
           ) : currentView === 'cameras' ? (
             <div className="flex-1 p-8 overflow-y-auto bg-black/40">
-              <div className="flex items-center justify-between mb-8">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
                 <div>
-                  <h1 className="text-3xl font-bold tracking-tight">Kamera Şəbəkəsi</h1>
-                  <p className="text-white/50 text-sm mt-1">Sektor B üzrə bütün aktiv kameralar (12/12)</p>
+                  <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Kamera Şəbəkəsi</h1>
+                  <p className="text-white/50 text-xs md:text-sm mt-1">Sektor B üzrə bütün aktiv kameralar (12/12)</p>
                 </div>
               </div>
 
@@ -293,17 +394,17 @@ const Dashboard = ({ onBack }: DashboardProps) => {
             </div>
           ) : currentView === 'analytics' ? (
             <div className="flex-1 p-8 overflow-y-auto bg-black/40">
-              <div className="flex items-center justify-between mb-8">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
                 <div>
-                  <h1 className="text-3xl font-bold tracking-tight">Statistika və Hesabatlar</h1>
-                  <p className="text-white/50 text-sm mt-1">Gündəlik və aylıq qayda pozuntularının analizi</p>
+                  <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Statistika</h1>
+                  <p className="text-white/50 text-xs md:text-sm mt-1">Gündəlik və aylıq pozuntu analizi</p>
                 </div>
-                <div className="flex items-center gap-3">
-                  <div className="px-4 py-2 bg-white/5 rounded-xl border border-white/10 text-xs font-bold text-white/60">
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className="px-3 py-1.5 bg-white/5 rounded-lg border border-white/10 text-[10px] font-bold text-white/60">
                     SON 30 GÜN
                   </div>
-                  <button className="px-4 py-2 bg-blue-600 rounded-xl text-xs font-bold hover:bg-blue-700 transition-all">
-                    HESABATI YÜKLƏ (.PDF)
+                  <button className="px-4 py-2 bg-blue-600 rounded-xl text-[10px] font-bold hover:bg-blue-700 transition-all flex items-center gap-2">
+                    HESABATI YÜKLƏ
                   </button>
                 </div>
               </div>
@@ -534,13 +635,13 @@ const Dashboard = ({ onBack }: DashboardProps) => {
   );
 };
 
-const NavItem = ({ icon, label, active = false, onClick }: { icon: React.ReactNode, label: string, active?: boolean, onClick?: () => void }) => (
+const NavItem = ({ icon, label, active = false, onClick, mobile = false }: { icon: React.ReactNode, label: string, active?: boolean, onClick?: () => void, mobile?: boolean }) => (
   <div
     onClick={onClick}
     className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all ${active ? 'bg-blue-600/10 text-blue-400 border border-blue-600/20 shadow-lg' : 'hover:bg-white/5 text-white/60'}`}
   >
     {icon}
-    <span className="hidden lg:block font-medium text-sm">{label}</span>
+    <span className={`${mobile ? 'block' : 'hidden lg:block'} font-medium text-sm`}>{label}</span>
   </div>
 );
 

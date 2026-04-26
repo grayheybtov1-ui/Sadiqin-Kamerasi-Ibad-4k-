@@ -138,7 +138,10 @@ const ControlCenter = () => {
           >
             {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
-          <h1 className="text-xl font-black tracking-tighter">ARB<span className="text-blue-500">ORO</span></h1>
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.8)] animate-pulse" />
+            <h1 className="text-xl font-black tracking-tighter">ARB<span className="text-blue-500">ORO</span></h1>
+          </div>
         </div>
 
         <div className="hidden lg:flex items-center gap-8 text-sm font-semibold text-white/50">
