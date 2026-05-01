@@ -55,9 +55,10 @@ interface Incident {
 
 interface DashboardProps {
   onBack?: () => void;
+  onNotify?: (message: string) => void;
 }
 
-const Dashboard = ({ onBack }: DashboardProps) => {
+const Dashboard = ({ onBack, onNotify }: DashboardProps) => {
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [isAlertActive, setIsAlertActive] = useState(false);
   const [activeModel, setActiveModel] = useState<number>(0);
@@ -83,6 +84,10 @@ const Dashboard = ({ onBack }: DashboardProps) => {
     };
     setIncidents(prev => [newIncident, ...prev]);
     setIsAlertActive(true);
+
+    if (onNotify) {
+      onNotify(`${type} - Bakı`);
+    }
 
     // Play alert sound simulation (optional)
     console.log("ALERT: Flower picked!");

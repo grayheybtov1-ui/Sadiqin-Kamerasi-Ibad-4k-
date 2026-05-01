@@ -609,12 +609,12 @@ const PassivePerson = ({
         {isSmoking && (
           <group position={[0.08, -0.05, 0.15]} rotation={[0.2, 0.4, 0]}>
             {/* Cigarette Body */}
-            <mesh rotation={[Math.PI/2, 0, 0]}>
+            <mesh rotation={[Math.PI / 2, 0, 0]}>
               <cylinderGeometry args={[0.008, 0.008, 0.15]} />
               <meshStandardMaterial color="white" />
             </mesh>
             {/* Filter */}
-            <mesh position={[0, 0, -0.04]} rotation={[Math.PI/2, 0, 0]}>
+            <mesh position={[0, 0, -0.04]} rotation={[Math.PI / 2, 0, 0]}>
               <cylinderGeometry args={[0.008, 0.008, 0.05]} />
               <meshStandardMaterial color="#ffa000" />
             </mesh>

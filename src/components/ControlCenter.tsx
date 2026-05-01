@@ -101,8 +101,26 @@ const AzerbaijanMap = ({ onSelectCity, activeViolations }: { onSelectCity: (city
 
 const ControlCenter = () => {
   const [view, setView] = useState<'map' | 'camera'>('map');
+  const [mainView, setMainView] = useState<'map' | 'cameras' | 'reports' | 'sectors'>('map');
   const [selectedCity, setSelectedCity] = useState<string | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+
+  const [allNotifications, setAllNotifications] = useState([
+    { id: 1, title: "Qayda Pozuntusu - Bakı", time: "2 dəq əvvəl", severity: "high" },
+    { id: 2, title: "Hərəkət - Gəncə", time: "15 dəq əvvəl", severity: "low" },
+    { id: 3, title: "Sistem Yeniləmə", time: "1 saat əvvəl", severity: "info" },
+  ]);
+
+  const addNotification = (title: string, severity: string = 'high') => {
+    const newNotif = {
+      id: Date.now(),
+      title,
+      time: "İndi",
+      severity
+    };
+    setAllNotifications(prev => [newNotif, ...prev]);
+  };
 
   const violations = [
     { id: 1, city: 'Bakı', mapX: 850, mapY: 450, count: 1, active: true, type: 'Qayda Pozuntusu' },
@@ -122,7 +140,7 @@ const ControlCenter = () => {
   if (view === 'camera') {
     return (
       <div className="relative h-screen w-full">
-        <Dashboard onBack={() => setView('map')} />
+        <Dashboard onBack={() => setView('map')} onNotify={(msg) => addNotification(msg, 'high')} />
       </div>
     );
   }
@@ -144,21 +162,77 @@ const ControlCenter = () => {
           </div>
         </div>
 
-        <div className="hidden lg:flex items-center gap-8 text-sm font-semibold text-white/50">
-          <a href="#" className="text-blue-400 border-b-2 border-blue-500 pb-1">Xülasə</a>
-          <a href="#" className="hover:text-white transition-colors">Kameralar</a>
-          <a href="#" className="hover:text-white transition-colors">Hesabatlar</a>
-          <a href="#" className="hover:text-white transition-colors">Sektorlar</a>
+        <div className="hidden lg:flex items-center gap-8 text-sm font-semibold">
+          <button 
+            onClick={() => setMainView('map')}
+            className={`${mainView === 'map' ? 'text-blue-400 border-b-2 border-blue-500' : 'text-white/50 hover:text-white'} pb-1 transition-all`}
+          >
+            Xülasə
+          </button>
+          <button 
+            onClick={() => setMainView('cameras')}
+            className={`${mainView === 'cameras' ? 'text-blue-400 border-b-2 border-blue-500' : 'text-white/50 hover:text-white'} pb-1 transition-all`}
+          >
+            Kameralar
+          </button>
+          <button 
+            onClick={() => setMainView('reports')}
+            className={`${mainView === 'reports' ? 'text-blue-400 border-b-2 border-blue-500' : 'text-white/50 hover:text-white'} pb-1 transition-all`}
+          >
+            Hesabatlar
+          </button>
+          <button 
+            onClick={() => setMainView('sectors')}
+            className={`${mainView === 'sectors' ? 'text-blue-400 border-b-2 border-blue-500' : 'text-white/50 hover:text-white'} pb-1 transition-all`}
+          >
+            Sektorlar
+          </button>
         </div>
 
-        <div className="flex items-center gap-2 md:gap-4">
+        <div className="flex items-center gap-2 md:gap-4 relative">
           <div className="hidden sm:flex items-center gap-2 px-3 md:px-4 py-2 rounded-xl bg-white/5 border border-white/10">
             <Search className="w-4 h-4 text-white/40" />
             <input type="text" placeholder="Axtarış..." className="bg-transparent border-none outline-none text-xs w-20 md:w-32" />
           </div>
-          <button className="w-9 h-9 md:w-10 md:h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 transition-all">
-            <Bell className="w-4 h-4 md:w-5 md:h-5" />
-          </button>
+          
+          <div className="relative">
+            <button 
+              onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
+              className={`w-9 h-9 md:w-10 md:h-10 rounded-xl border flex items-center justify-center transition-all ${isNotificationsOpen ? 'bg-blue-500/20 border-blue-500/50 text-blue-400' : 'bg-white/5 border-white/10 hover:bg-white/10 text-white'}`}
+            >
+              <Bell className="w-4 h-4 md:w-5 md:h-5" />
+              {allNotifications.length > 0 && (
+                <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-[10px] font-bold flex items-center justify-center text-white border-2 border-[#050505]">
+                  {allNotifications.length}
+                </span>
+              )}
+            </button>
+
+            <AnimatePresence>
+              {isNotificationsOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                  className="absolute top-full right-0 mt-4 w-72 md:w-80 glass-card p-4 z-[110] shadow-2xl overflow-hidden"
+                >
+                  <div className="flex items-center justify-between mb-4 px-2">
+                    <h4 className="text-xs font-black uppercase tracking-widest text-white/40">Bildirişlər</h4>
+                    <button onClick={() => setAllNotifications([])} className="text-[10px] font-bold text-blue-400 hover:underline">Təmizlə</button>
+                  </div>
+                  <div className="space-y-1 max-h-80 overflow-y-auto scrollbar-hide">
+                    {allNotifications.map((notif) => (
+                      <NotificationItem key={notif.id} title={notif.title} time={notif.time} severity={notif.severity} />
+                    ))}
+                    {allNotifications.length === 0 && (
+                      <div className="py-8 text-center text-[10px] text-white/20 italic">Yeni bildiriş yoxdur</div>
+                    )}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
           <div className="w-9 h-9 md:w-10 md:h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 border-2 border-white/20" />
         </div>
 
@@ -171,10 +245,10 @@ const ControlCenter = () => {
               exit={{ opacity: 0, y: -20 }}
               className="absolute top-20 left-0 right-0 bg-[#0e0e0e]/95 backdrop-blur-2xl border-b border-white/10 p-6 lg:hidden z-50 flex flex-col gap-4 shadow-2xl"
             >
-              <a href="#" className="text-lg font-bold text-blue-400 py-2 border-b border-white/5">Xülasə</a>
-              <a href="#" className="text-lg font-bold text-white/60 py-2 border-b border-white/5">Kameralar</a>
-              <a href="#" className="text-lg font-bold text-white/60 py-2 border-b border-white/5">Hesabatlar</a>
-              <a href="#" className="text-lg font-bold text-white/60 py-2">Sektorlar</a>
+              <button onClick={() => { setMainView('map'); setIsMobileMenuOpen(false); }} className={`text-lg font-bold py-2 border-b border-white/5 ${mainView === 'map' ? 'text-blue-400' : 'text-white/60'}`}>Xülasə</button>
+              <button onClick={() => { setMainView('cameras'); setIsMobileMenuOpen(false); }} className={`text-lg font-bold py-2 border-b border-white/5 ${mainView === 'cameras' ? 'text-blue-400' : 'text-white/60'}`}>Kameralar</button>
+              <button onClick={() => { setMainView('reports'); setIsMobileMenuOpen(false); }} className={`text-lg font-bold py-2 border-b border-white/5 ${mainView === 'reports' ? 'text-blue-400' : 'text-white/60'}`}>Hesabatlar</button>
+              <button onClick={() => { setMainView('sectors'); setIsMobileMenuOpen(false); }} className={`text-lg font-bold py-2 ${mainView === 'sectors' ? 'text-blue-400' : 'text-white/60'}`}>Sektorlar</button>
               
               <div className="mt-4 flex flex-col gap-3">
                 <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-white/5 border border-white/10">
@@ -188,71 +262,265 @@ const ControlCenter = () => {
       </nav>
 
       {/* Main Content Area */}
-      <div className="flex-1 overflow-y-auto lg:overflow-hidden scrollbar-hide">
-        <div className="grid grid-cols-12 gap-4 md:gap-6 p-4 md:p-8">
-          {/* Left Sidebar */}
-          <div className="col-span-12 lg:col-span-3 order-2 lg:order-1 flex flex-col gap-4 md:gap-6">
-            <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="glass-card p-5 md:p-6">
-              <h3 className="text-sm font-bold uppercase tracking-widest text-white/40 mb-5 flex items-center gap-2">
-                <Activity className="w-4 h-4 text-green-500" /> Canlı Analitika
-              </h3>
-              <div className="grid grid-cols-2 lg:grid-cols-1 gap-4 md:gap-6">
-                <StatItem label="Aktiv Pozuntular" value="1" color="text-red-500" />
-                <StatItem label="Qorunan Obyektlər" value="1,240" color="text-blue-500" />
-                <StatItem label="Aİ Modelləri" value="3 Aktiv" color="text-yellow-500" />
-                <StatItem label="Sistem Gecikməsi" value="12ms" color="text-green-500" />
-              </div>
-            </motion.div>
-
-            <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.1 }} className="glass-card p-5 md:p-6">
-              <h3 className="text-sm font-bold uppercase tracking-widest text-white/40 mb-4 flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4 text-red-500" /> Son Xəbərdarlıqlar
-              </h3>
-              <div className="space-y-3 max-h-48 lg:max-h-none overflow-y-auto pr-1">
-                <NotificationItem title="Qayda Pozuntusu - Bakı" time="2 dəq əvvəl" severity="high" />
-                <NotificationItem title="Hərəkət - Gəncə" time="15 dəq əvvəl" severity="low" />
-                <NotificationItem title="Sistem Yeniləmə" time="1 saat əvvəl" severity="info" />
-              </div>
-            </motion.div>
-          </div>
-
-          {/* Center Map */}
-          <div className="col-span-12 lg:col-span-6 order-1 lg:order-2 glass-card p-4 md:p-8 relative flex flex-col items-center justify-center min-h-[400px] lg:min-h-0 overflow-hidden">
-            <div className="absolute top-6 left-6 md:top-8 md:left-8 z-10">
-              <h2 className="text-xl md:text-3xl font-black leading-tight">Azərbaycan <br /><span className="text-blue-500">Nəzarət Xəritəsi</span></h2>
-              <p className="text-white/40 text-[10px] md:text-sm mt-1 font-medium">Bütün bölgələr üzrə real-vaxt monitorinqi</p>
-            </div>
-            <AzerbaijanMap onSelectCity={handleCitySelect} activeViolations={violations} />
-            <div className="absolute bottom-6 right-6 md:bottom-8 md:right-8 flex items-center gap-3 md:gap-4 z-10">
-              <LegendItem color="bg-red-500" label="Kritik" />
-              <LegendItem color="bg-yellow-500" label="Xəb." />
-              <LegendItem color="bg-blue-500" label="Norm." />
-            </div>
-          </div>
-
-          {/* Right Sidebar */}
-          <div className="col-span-12 lg:col-span-3 order-3 flex flex-col gap-6">
-            <motion.div initial={{ opacity: 0, x: 20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} className="flex-1 glass-card p-5 md:p-6 flex flex-col">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-sm font-bold uppercase tracking-widest text-white/40 flex items-center gap-2">
-                  <Camera className="w-4 h-4" /> Seçilmiş Sektorlar
+      <div className="flex-1 overflow-y-auto scrollbar-hide">
+        {mainView === 'map' ? (
+          <div className="grid grid-cols-12 gap-4 md:gap-6 p-4 md:p-8">
+            {/* Left Sidebar */}
+            <div className="col-span-12 lg:col-span-3 order-2 lg:order-1 flex flex-col gap-4 md:gap-6">
+              <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="glass-card p-5 md:p-6">
+                <h3 className="text-sm font-bold uppercase tracking-widest text-white/40 mb-5 flex items-center gap-2">
+                  <Activity className="w-4 h-4 text-green-500" /> Canlı Analitika
                 </h3>
-                <button className="text-[10px] font-bold text-blue-400 hover:underline">Hamısına bax</button>
+                <div className="grid grid-cols-2 lg:grid-cols-1 gap-4 md:gap-6">
+                  <StatItem label="Aktiv Pozuntular" value={allNotifications.filter(n => n.severity === 'high').length.toString()} color="text-red-500" />
+                  <StatItem label="Qorunan Obyektlər" value="1,240" color="text-blue-500" />
+                  <StatItem label="Aİ Modelləri" value="3 Aktiv" color="text-yellow-500" />
+                  <StatItem label="Sistem Gecikməsi" value="12ms" color="text-green-500" />
+                </div>
+              </motion.div>
+
+              <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.1 }} className="glass-card p-5 md:p-6">
+                <h3 className="text-sm font-bold uppercase tracking-widest text-white/40 mb-4 flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 text-red-500" /> Son Xəbərdarlıqlar
+                </h3>
+                <div className="space-y-3 max-h-48 lg:max-h-none overflow-y-auto pr-1">
+                  {allNotifications.slice(0, 5).map(notif => (
+                    <NotificationItem key={notif.id} title={notif.title} time={notif.time} severity={notif.severity} />
+                  ))}
+                  {allNotifications.length === 0 && (
+                    <div className="text-center py-4 text-[10px] text-white/20 italic">Yeni bildiriş yoxdur</div>
+                  )}
+                </div>
+              </motion.div>
+            </div>
+
+            {/* Center Map */}
+            <div className="col-span-12 lg:col-span-6 order-1 lg:order-2 glass-card p-4 md:p-8 relative flex flex-col items-center justify-center min-h-[400px] lg:min-h-0 overflow-hidden">
+              <div className="absolute top-6 left-6 md:top-8 md:left-8 z-10">
+                <h2 className="text-xl md:text-3xl font-black leading-tight">Azərbaycan <br /><span className="text-blue-500">Nəzarət Xəritəsi</span></h2>
+                <p className="text-white/40 text-[10px] md:text-sm mt-1 font-medium">Bütün bölgələr üzrə real-vaxt monitorinqi</p>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-4 flex-1 overflow-y-auto pr-2 scrollbar-hide max-h-[300px] lg:max-h-none">
-                <SectorCard city="Bakı" type="Mərkəzi Park" status="Həyəcan" active onClick={() => handleCitySelect('Bakı')} />
-                <SectorCard city="Gəncə" type="Heydər Əliyev Parkı" status="Normal" />
-                <SectorCard city="Sumqayıt" type="Dənizkənarı Bulvar" status="Normal" />
-                <SectorCard city="Quba" type="Qırmızı Qəsəbə" status="Normal" />
+              <AzerbaijanMap onSelectCity={handleCitySelect} activeViolations={violations} />
+              <div className="absolute bottom-6 right-6 md:bottom-8 md:right-8 flex items-center gap-3 md:gap-4 z-10">
+                <LegendItem color="bg-red-500" label="Kritik" />
+                <LegendItem color="bg-yellow-500" label="Xəb." />
+                <LegendItem color="bg-blue-500" label="Norm." />
               </div>
-              <div className="mt-6 pt-6 border-t border-white/5">
-                <button className="w-full py-3 md:py-4 bg-blue-600 rounded-2xl font-bold text-sm shadow-[0_0_20px_rgba(37,99,235,0.3)] hover:bg-blue-500 transition-all flex items-center justify-center gap-2 group">
-                  Yeni Sektor Əlavə Et <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                </button>
-              </div>
-            </motion.div>
+            </div>
+
+            {/* Right Sidebar */}
+            <div className="col-span-12 lg:col-span-3 order-3 flex flex-col gap-6">
+              <motion.div initial={{ opacity: 0, x: 20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} className="flex-1 glass-card p-5 md:p-6 flex flex-col">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-sm font-bold uppercase tracking-widest text-white/40 flex items-center gap-2">
+                    <Camera className="w-4 h-4" /> Seçilmiş Sektorlar
+                  </h3>
+                  <button className="text-[10px] font-bold text-blue-400 hover:underline">Hamısına bax</button>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-4 flex-1 overflow-y-auto pr-2 scrollbar-hide max-h-[300px] lg:max-h-none">
+                  <SectorCard city="Bakı" type="Mərkəzi Park" status={allNotifications.some(n => n.title.includes('Bakı')) ? 'Həyəcan' : 'Normal'} active={allNotifications.some(n => n.title.includes('Bakı'))} onClick={() => handleCitySelect('Bakı')} />
+                  <SectorCard city="Gəncə" type="Heydər Əliyev Parkı" status="Normal" />
+                  <SectorCard city="Sumqayıt" type="Dənizkənarı Bulvar" status="Normal" />
+                  <SectorCard city="Quba" type="Qırmızı Qəsəbə" status="Normal" />
+                </div>
+                <div className="mt-6 pt-6 border-t border-white/5">
+                  <button className="w-full py-3 md:py-4 bg-blue-600 rounded-2xl font-bold text-sm shadow-[0_0_20px_rgba(37,99,235,0.3)] hover:bg-blue-500 transition-all flex items-center justify-center gap-2 group">
+                    Yeni Sektor Əlavə Et <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  </button>
+                </div>
+              </motion.div>
+            </div>
           </div>
-        </div>
+        ) : mainView === 'cameras' ? (
+          <div className="p-4 md:p-10">
+            <div className="mb-10">
+              <h1 className="text-3xl md:text-5xl font-black tracking-tighter">KAMERA <span className="text-blue-500">ŞƏBƏKƏSİ</span></h1>
+              <p className="text-white/40 mt-2 font-medium">Ölkə üzrə bütün aktiv nəzarət nöqtələri</p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {['Bakı', 'Gəncə', 'Sumqayıt', 'Lənkəran', 'Quba', 'Şəki', 'Naxçıvan', 'Şuşa'].map((city, i) => (
+                <motion.div 
+                  key={city}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: i * 0.05 }}
+                  className="group relative aspect-video rounded-3xl overflow-hidden border border-white/10 hover:border-blue-500/50 transition-all cursor-pointer"
+                  onClick={() => city === 'Bakı' ? handleCitySelect(city) : null}
+                >
+                  <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-all" />
+                  <img 
+                    src={`https://images.unsplash.com/photo-1544148103-0773bf10d330?q=80&w=800&auto=format&fit=crop&v=${i}`} 
+                    className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700" 
+                    alt={city}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+                  <div className="absolute top-4 left-4 flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                    <span className="text-[10px] font-mono font-bold tracking-widest text-white/80 uppercase">CAM_{city.toUpperCase()}</span>
+                  </div>
+                  <div className="absolute bottom-4 left-4">
+                    <h4 className="text-lg font-black">{city}</h4>
+                    <p className="text-[10px] text-white/40 font-bold uppercase tracking-widest">Sektor A-0{i+1} • 4K Live</p>
+                  </div>
+                  {city === 'Bakı' && (
+                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="bg-blue-600 px-6 py-2 rounded-full font-bold text-xs shadow-2xl">BAXMAQ</div>
+                    </div>
+                  )}
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        ) : mainView === 'reports' ? (
+          <div className="p-4 md:p-10">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
+              <div>
+                <h1 className="text-3xl md:text-5xl font-black tracking-tighter">HESABATLAR <span className="text-blue-500">& ANALİTİKA</span></h1>
+                <p className="text-white/40 mt-2 font-medium">Sistem tərəfindən emal edilmiş son datalar</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <button className="px-6 py-3 bg-white/5 border border-white/10 rounded-2xl text-xs font-bold hover:bg-white/10 transition-all">FILTRLƏ</button>
+                <button className="px-6 py-3 bg-blue-600 rounded-2xl text-xs font-bold hover:bg-blue-500 transition-all shadow-xl shadow-blue-500/20">EXPORT PDF</button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+              <div className="lg:col-span-8 flex flex-col gap-6">
+                <div className="glass-card p-8 min-h-[400px] flex flex-col">
+                  <div className="flex items-center justify-between mb-8">
+                    <h3 className="text-sm font-bold uppercase tracking-widest text-white/40">Pozuntu Statistikası (Həftəlik)</h3>
+                    <div className="flex gap-4">
+                      <LegendItem color="bg-blue-500" label="Normal" />
+                      <LegendItem color="bg-red-500" label="Kritik" />
+                    </div>
+                  </div>
+                  <div className="flex-1 flex items-end justify-between gap-4">
+                    {[45, 60, 35, 80, 55, 90, 70].map((h, i) => (
+                      <div key={i} className="flex-1 flex flex-col items-center gap-4 group">
+                        <div className="relative w-full">
+                           <motion.div 
+                            initial={{ height: 0 }} 
+                            animate={{ height: `${h}%` }} 
+                            className="w-full bg-blue-500/20 border-t-2 border-blue-500/40 rounded-t-xl group-hover:bg-blue-500/30 transition-all" 
+                          />
+                          <motion.div 
+                            initial={{ height: 0 }} 
+                            animate={{ height: `${h * 0.3}%` }} 
+                            className="absolute bottom-0 w-full bg-red-500/40 border-t-2 border-red-500 rounded-t-xl" 
+                          />
+                        </div>
+                        <span className="text-[10px] font-bold text-white/30">GÜN {i+1}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="glass-card p-8">
+                  <h3 className="text-sm font-bold uppercase tracking-widest text-white/40 mb-6">Son İnsidentlər</h3>
+                  <div className="space-y-4">
+                    {allNotifications.filter(n => n.severity === 'high').map((notif, idx) => (
+                      <div key={notif.id} className="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/5 hover:border-white/10 transition-all">
+                        <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 rounded-xl bg-red-500/10 flex items-center justify-center">
+                            <AlertTriangle className="w-6 h-6 text-red-500" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-bold uppercase tracking-tight">{notif.title}</p>
+                            <p className="text-[10px] text-white/40 font-medium">Bakı Sektoru • Kamera A-02</p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-xs font-bold text-red-500">KRİTİK</p>
+                          <p className="text-[10px] text-white/30 font-mono">{notif.time}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="lg:col-span-4 flex flex-col gap-6">
+                <div className="glass-card p-8">
+                  <h3 className="text-sm font-bold uppercase tracking-widest text-white/40 mb-6">Ümumi Göstəricilər</h3>
+                  <div className="space-y-6">
+                    <StatItem label="Cəmi Pozuntular" value={allNotifications.length.toString()} color="text-white" />
+                    <StatItem label="Həll Edilmiş" value="92%" color="text-green-500" />
+                    <StatItem label="Gözləmədə" value="12" color="text-yellow-500" />
+                    <StatItem label="Yanlış Həyəcan" value="1.2%" color="text-blue-500" />
+                  </div>
+                </div>
+
+                <div className="glass-card p-8 flex-1">
+                  <h3 className="text-sm font-bold uppercase tracking-widest text-white/40 mb-6">Top Sektorlar</h3>
+                  <div className="space-y-4">
+                    {['Bakı Mərkəz', 'Gəncə Park', 'Sumqayıt Sahil'].map((sector, i) => (
+                      <div key={sector} className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-white/60">{sector}</span>
+                        <div className="flex items-center gap-3">
+                           <div className="w-24 h-1.5 bg-white/5 rounded-full overflow-hidden">
+                            <div className="h-full bg-blue-500" style={{ width: `${80 - i * 15}%` }} />
+                           </div>
+                           <span className="text-[10px] font-bold text-white/80">{80 - i * 15}%</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="p-4 md:p-10">
+            <div className="mb-10">
+              <h1 className="text-3xl md:text-5xl font-black tracking-tighter">AKTİV <span className="text-blue-500">SEKTORLAR</span></h1>
+              <p className="text-white/40 mt-2 font-medium">Bütün nəzarət zonalarının statusu və idarəetməsi</p>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {violations.map((v) => (
+                <motion.div 
+                  key={v.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="glass-card p-6 border-l-4 border-l-blue-500"
+                >
+                  <div className="flex justify-between items-start mb-6">
+                    <div>
+                      <h3 className="text-xl font-black">{v.city}</h3>
+                      <p className="text-xs text-white/40 font-bold uppercase tracking-widest mt-1">{v.type}</p>
+                    </div>
+                    <div className={`px-3 py-1 rounded-full text-[10px] font-black ${v.active || allNotifications.some(n => n.title.includes(v.city)) ? 'bg-red-500/20 text-red-400' : 'bg-green-500/20 text-green-400'}`}>
+                      {v.active || allNotifications.some(n => n.title.includes(v.city)) ? 'TƏHLÜKƏ' : 'STABİL'}
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4 mb-8">
+                    <div className="p-3 rounded-2xl bg-white/5">
+                      <p className="text-[10px] text-white/30 font-bold uppercase mb-1">Kameralar</p>
+                      <p className="text-lg font-black">{v.id * 12}</p>
+                    </div>
+                    <div className="p-3 rounded-2xl bg-white/5">
+                      <p className="text-[10px] text-white/30 font-bold uppercase mb-1">Aktivlik</p>
+                      <p className="text-lg font-black">98.2%</p>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-3">
+                    <button 
+                      onClick={() => handleCitySelect(v.city)}
+                      className="flex-1 py-3 bg-blue-600 rounded-2xl font-bold text-xs hover:bg-blue-500 transition-all shadow-xl shadow-blue-500/10"
+                    >
+                      SEKTORA KEÇ
+                    </button>
+                    <button className="w-12 h-12 flex items-center justify-center bg-white/5 rounded-2xl border border-white/10 hover:bg-white/10 transition-all">
+                      <Settings className="w-5 h-5 text-white/40" />
+                    </button>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
